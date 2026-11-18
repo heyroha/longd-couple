@@ -1,0 +1,16 @@
+{
+  "name": "longd-couple",
+  "version": "1.0.0",
+  "private": true,
+  "description": "롱디's 월례 초대장 + 응답 저장 서버",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "web-push": "3.6.7"
+  }
+}

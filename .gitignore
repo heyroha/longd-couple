@@ -1,0 +1,17 @@
+# 비밀 정보 / 로컬 데이터
+.env
+.env.*
+!.env.example
+/data/
+
+# 원본 파일 (사이트에는 public/assets/intro.mp4 사용)
+KakaoTalk_Video_*.mp4
+롱디스월례.txt
+
+node_modules/
+.vercel/
+.claude/
+.DS_Store
+
+# 말투 카드 (개인 대화에서 뽑은 문장)
+tools/out/

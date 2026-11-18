@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>제 3차 롱디's 월례 초대장</title>
+
+<!-- 구글 폰트 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poor+Story&display=swap" rel="stylesheet">
+
+<!-- 인트로 비디오 미리 받기 -->
+
+<!-- Canvas Confetti (폭죽 효과) -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/notebook.css">
+
+<!-- 앱 설치(PWA): 아이폰 홈 화면 추가 / 안드로이드 앱 설치 -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffe0e9">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="롱디's 월례">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+</head>
+<body class="intro-active">
+<script>
+  // 이 탭에서 이미 인트로를 봤거나 뒤로가기·새로고침이면 인트로를 아예 안 그림 (깜빡임 방지)
+  try {
+    var nt = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0] || {}).type || 'navigate';
+    if (sessionStorage.getItem('kk_intro_seen') === '1' || nt !== 'navigate' || /[?&]view=/.test(location.search)) document.documentElement.classList.add('no-intro');
+  } catch (e) {}
+</script>
+
+<!-- INTRO: 앱 시작 시 재생되는 인트로 비디오 (assets/intro.mp4 를 직접 넣으면 재생, 없으면 바로 본편) -->
+<div class="intro-overlay" id="introOverlay">
+<video id="introVideo" autoplay muted playsinline preload="auto">
+<!-- 아이폰·갤럭시: 재압축 없는 원본(HEVC) / 그 외: H.264 -->
+<source src="assets/intro-hevc.mp4" type='video/mp4; codecs="hvc1"'>
+<source src="assets/intro.mp4" type="video/mp4">
+</video>
+<div class="intro-start" id="introStart">
+<div><img src="icons/doodle/letter.svg" alt="" width="64" height="64"></div>
+<div>초대장이 도착했어요</div>
+<div style="font-family:var(--font-body);font-size:1rem;color:var(--text-sub)">화면을 눌러 열어보기</div>
+</div>
+<div class="intro-controls">
+<button class="intro-btn" id="introSound"><img class="ico" src="icons/doodle/sound-off.svg" alt=""> 소리 켜기</button>
+<button class="intro-btn" id="introSkip">터치하면 넘어가요 ›</button>
+</div>
+<div class="intro-progress" id="introProgress"></div>
+</div>
+
+<div class="bg-hearts" id="bgHearts"></div>
+
+<div class="container" id="mainContainer">
+
+<button class="menu-btn" id="menuBtn" type="button" aria-label="메뉴 열기" aria-controls="sideMenu" aria-expanded="false" onclick="openMenu()">
+<img class="ico ico-lg" src="icons/doodle/menu.svg" alt="">
+<b class="count-badge" id="hintBadge" hidden></b>
+</button>
+
+<!-- PAGE 1 -->
+<div class="page-1 page" id="page1">
+<div class="badge"><img class="ico" src="icons/doodle/blossom.svg" alt=""> 롱디 커플 정기 총회</div>
+<h1 class="main-title">제 <span class="round-n">3</span>차 롱디's 월례</h1>
+<div class="home-days" id="homeDays"></div>
+<!-- 우리 사이 거리 (각자 위치 → km) -->
+<div class="distance" id="distanceBar">
+<div class="distance-track">
+<span class="dist-tick left" id="distMaxL"></span>
+<span class="dist-tick mid">0km</span>
+<span class="dist-tick right" id="distMaxR"></span>
+<img class="dist-avatar" id="distBoy" src="assets/avatar-boy.jpg" alt="남자 캐릭터">
+<img class="dist-avatar" id="distGirl" src="assets/avatar-girl.jpg" alt="여자 캐릭터">
+</div>
+<div class="distance-label" id="distanceLabel">위치를 불러오는 중...</div>
+</div>
+
+<div class="video-card">
+<img src="icons/icon-512.png" alt="" style="width:100%;display:block">
+</div>
+
+<div class="question-box">
+<p class="question-text">이번 달 월례 회의에 참석하시겠습니까?</p>
+<div class="btn-group" id="btnGroup">
+<button class="btn btn-yes" onclick="handleAttend()">참석 <img class="ico" src="icons/doodle/hearts.svg" alt=""></button>
+<button class="btn btn-no" id="noBtn">불참 <img class="ico" src="icons/doodle/heart-broken.svg" alt=""></button>
+</div>
+<button class="history-link" type="button" onclick="showHistory()"><img class="ico" src="icons/doodle/scroll.svg" alt=""> 등록된 의결서 확인하기</button>
+</div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page-2 page" id="page2">
+<div class="report-header">
+<div class="badge"><img class="ico" src="icons/doodle/letter.svg" alt=""> 제 <span class="round-n">3</span>차 월례 정기 총회 안건</div>
+<h2>롱디's 월례 의결서</h2>
+</div>
+
+<div class="dday-card">
+<div class="dday-title">다음 월례 집결까지 남은 시간</div>
+<div class="dday-timer" id="ddayTimer">&nbsp;</div>
+</div>
+
+<div class="agenda-card">
+<div class="agenda-num">AGENDA 01</div>
+<div class="agenda-title"><img class="ico" src="icons/doodle/pin.svg" alt=""> 집결 일시 및 장소</div>
+<div class="agenda-detail">
+<div class="info-row">
+<div class="info-icon"><img class="ico" src="icons/doodle/calendar.svg" alt=""></div>
+<div><strong>일시:</strong> <span id="ddayText">불러오는 중...</span></div>
+</div>
+<div class="info-row">
+<div class="info-icon"><img class="ico" src="icons/doodle/home.svg" alt=""></div>
+<div><strong>장소:</strong> <span id="placeText">우리집 (별빛)</span></div>
+</div>
+</div>
+</div>
+
+<div class="agenda-card">
+<div class="agenda-num">AGENDA 02</div>
+<div class="agenda-title"><img class="ico" src="icons/doodle/plate.svg" alt=""> 식사 메뉴 안건 선택 <span class="agenda-hint">(복수 선택 가능)</span></div>
+<div class="option-list" id="menuList">
+<div class="menu-status">메뉴 불러오는 중...</div>
+</div>
+<form class="menu-add" id="menuAddForm" autocomplete="off">
+<div class="menu-add-fields">
+<input type="text" class="msg-input menu-name-input" id="menuAddInput" maxlength="40" placeholder="새 메뉴 (예: 차돌 짬뽕)">
+<input type="text" class="msg-input menu-memo-input" id="menuAddMemo" maxlength="100" placeholder="요청사항 메모 (선택사항)">
+</div>
+<button type="submit" class="icon-btn add" aria-label="식사 메뉴 추가"><img class="ico" src="icons/doodle/plus.svg" alt=""></button>
+</form>
+
+<div class="menu-part">
+<div class="agenda-title"><img class="ico" src="icons/doodle/wine.svg" alt=""> 주류 및 음료 안건 선택 <span class="agenda-hint">(복수 선택 가능)</span></div>
+<div class="option-list" id="drinkList"></div>
+<form class="menu-add" id="drinkAddForm" autocomplete="off">
+<div class="menu-add-fields">
+<input type="text" class="msg-input menu-name-input" maxlength="40" placeholder="새 주류·음료 (예: 하이볼)">
+<input type="text" class="msg-input menu-memo-input" maxlength="100" placeholder="요청사항 메모 (선택사항)">
+</div>
+<button type="submit" class="icon-btn add" aria-label="주류·음료 추가"><img class="ico" src="icons/doodle/plus.svg" alt=""></button>
+</form>
+</div>
+<p class="drag-tip">메뉴를 꾹 누르면 순서를 옮길 수 있어요</p>
+
+<div class="menu-part recipe-embed" id="recipeEmbed">
+<div class="agenda-title"><img class="ico" src="icons/doodle/recipe.svg" alt=""> 메뉴가 생각나지 않는다면? <span class="agenda-hint">(레시피 노트)</span></div>
+<button type="button" class="chat-open" onclick="openRecipeChat()"><img class="ico" src="icons/doodle/search.svg" alt=""><span><b>새 레시피 찾기</b><small>AI에게 뭐 해 먹을지 물어보기</small></span><em>›</em></button>
+<div class="recipe-toolbar">
+<label class="recipe-search">
+<img class="ico" src="icons/doodle/recipe.svg" alt="">
+<input type="search" id="recipeFilter" placeholder="내 레시피에서 찾기" autocomplete="off">
+</label>
+<button type="button" class="icon-btn add" aria-label="레시피 직접 쓰기" onclick="editRecipe()"><img class="ico" src="icons/doodle/plus.svg" alt=""></button>
+</div>
+<div class="recipe-chips" id="recipeChips"></div>
+<div class="recipe-grid" id="recipeGrid"><div class="menu-status">불러오는 중...</div></div>
+</div>
+</div>
+
+<div class="agenda-card">
+<div class="agenda-num">AGENDA 03</div>
+<div class="agenda-title"><img class="ico" src="icons/doodle/letter.svg" alt=""> 하고 싶은 말이 있다면 적어줘</div>
+<input type="text" class="msg-input" id="userMsg" placeholder="상대방에게 하고 싶은 말을 적어주세요...">
+
+<div class="sticker-group">
+<button class="sticker-btn selected" data-sticker="💖" onclick="selectSticker(this)"><img class="ico" src="icons/doodle/heart.svg" alt=""></button>
+<button class="sticker-btn" data-sticker="🥰" onclick="selectSticker(this)"><img class="ico" src="icons/doodle/blush.svg" alt=""></button>
+<button class="sticker-btn" data-sticker="🌹" onclick="selectSticker(this)"><img class="ico" src="icons/doodle/rose.svg" alt=""></button>
+<button class="sticker-btn" data-sticker="🎁" onclick="selectSticker(this)"><img class="ico" src="icons/doodle/gift.svg" alt=""></button>
+</div>
+</div>
+
+<button class="submit-btn" onclick="submitAgenda()">안건 최종 의결 및 확정 <img class="ico" src="icons/doodle/sparkle.svg" alt=""></button>
+<button class="history-link" type="button" onclick="showHistory()"><img class="ico" src="icons/doodle/scroll.svg" alt=""> 등록된 의결서 확인하기</button>
+<button class="history-home" type="button" onclick="goHome()"><img class="ico" src="icons/doodle/home.svg" alt=""> 처음 화면으로</button>
+</div>
+
+<!-- PAGE 3: 등록 내역 확인 -->
+<div class="page-3 page" id="page3">
+<div class="report-header">
+<div class="badge"><img class="ico" src="icons/doodle/scroll.svg" alt=""> 롱디's 월례 의결 기록</div>
+<h2>등록된 의결서</h2>
+<p class="history-count" id="historyCount"></p>
+</div>
+<div class="history-list" id="historyList"></div>
+<button class="back-arrow" type="button" aria-label="돌아가기" onclick="goBack()"><img class="ico" src="icons/doodle/back.svg" alt=""></button>
+<button class="history-home" type="button" onclick="goHome()"><img class="ico" src="icons/doodle/home.svg" alt=""> 처음 화면으로</button>
+</div>
+
+<!-- PAGE 4: 우리들의 히스토리 (구글 시트 정리본) -->
+<div class="page-4 page" id="page4">
+<div class="report-header">
+<div class="badge"><img class="ico" src="icons/doodle/diary.svg" alt=""> 롱디's 아카이브</div>
+<h2>우리들의 히스토리</h2>
+</div>
+<nav class="story-tabs" id="storyTabs" role="tablist" aria-label="히스토리 페이지"></nav>
+<div class="story-body" id="storyBody"><div class="menu-status">불러오는 중...</div></div>
+<button class="back-arrow" type="button" aria-label="돌아가기" onclick="goBack()"><img class="ico" src="icons/doodle/back.svg" alt=""></button>
+</div>
+
+<!-- 내 프로필 -->
+<div class="page sub-page" id="pageSettings">
+<div class="report-header">
+<div class="badge"><img class="ico" src="icons/doodle/gear.svg" alt=""> 프로필 · 우리 설정</div>
+<h2>설정</h2>
+<p class="settings-note" id="profileNote">의결서 · 알림 · 거리 막대에 이 프로필이 쓰여요</p>
+</div>
+<nav class="set-menu agenda-card" id="setMenu">
+<button type="button" onclick="openSetSec('profile')"><img class="ico" src="icons/doodle/user.svg" alt=""><span>프로필</span><small id="setMenuProfile"></small><em>›</em></button>
+<button type="button" onclick="openSetSec('location')"><img class="ico" src="icons/doodle/location.svg" alt=""><span>위치 설정</span><small id="setMenuLoc"></small><em>›</em></button>
+<button type="button" onclick="openSetSec('common')"><img class="ico" src="icons/doodle/calendar.svg" alt=""><span>우리 둘 공통 설정</span><em>›</em></button>
+<button type="button" onclick="openSetSec('push')"><img class="ico" src="icons/doodle/bell.svg" alt=""><span>알림</span><em>›</em></button>
+<button type="button" onclick="openSetSec('install')"><img class="ico" src="icons/doodle/install.svg" alt=""><span>앱으로 설치하기</span><em>›</em></button>
+<button type="button" onclick="openSetSec('versions')"><img class="ico" src="icons/doodle/diary.svg" alt=""><span>업데이트 목록</span><small id="setMenuVer"></small><em>›</em></button>
+</nav>
+<section class="agenda-card profile-pair-card" data-sec="profile">
+<div class="settings-section-title"><img class="ico" src="icons/doodle/people.svg" alt=""> 우리 둘</div>
+<div class="profile-pair" id="profilePair"></div>
+<p class="settings-desc">이름을 바꾸면 예전에 등록한 의결서의 이름도 같이 바뀌어요.</p>
+</section>
+<section class="agenda-card" id="profileSection" data-sec="profile">
+<div class="settings-section-title"><img class="ico" src="icons/doodle/user.svg" alt=""> 내 프로필</div>
+<div class="profile-row">
+<span class="avatar avatar-lg avatar-empty" id="profilePreview"><img class="ico" src="icons/doodle/user.svg" alt=""></span>
+<div class="avatar-options" role="radiogroup" aria-label="캐릭터 선택">
+<button type="button" class="avatar-option" data-avatar="boy" role="radio" aria-checked="false" onclick="pickAvatar('boy')">
+<img class="avatar" src="assets/avatar-boy.jpg" alt="남자 캐릭터"><span class="hanja">男</span>
+</button>
+<button type="button" class="avatar-option" data-avatar="girl" role="radio" aria-checked="false" onclick="pickAvatar('girl')">
+<img class="avatar" src="assets/avatar-girl.jpg" alt="여자 캐릭터"><span class="hanja">女</span>
+</button>
+</div>
+</div>
+<label class="settings-field">
+<span>이름</span>
+<input type="text" id="profileName" class="msg-input" maxlength="12" placeholder="이름이나 애칭">
+</label>
+<button type="button" class="close-btn full" onclick="saveProfile()">프로필 저장</button>
+</section>
+<section class="agenda-card" data-sec="location">
+<div class="settings-section-title"><img class="ico" src="icons/doodle/location.svg" alt=""> 내 위치 (거리 막대)</div>
+<p class="settings-desc" id="locationStatus">위치를 허용하면 우리 사이 거리가 홈 화면에 보여요. 좌표는 서버에만 저장되고, 화면에는 거리와 구·동만 보여요.</p>
+<button type="button" class="close-btn full ghost" onclick="shareLocation(true)"><img class="ico" src="icons/doodle/location.svg" alt=""> 지금 위치로 업데이트</button>
+<p class="settings-desc">앱을 켜 두는 동안에는 움직이면 바로, 가만히 있어도 10분마다 위치가 저절로 업데이트돼요. (앱을 완전히 닫으면 폰이 위치를 막아서, 다음에 열 때 업데이트돼요)</p>
+</section>
+<div class="settings-part-title" data-sec="common"><img class="ico" src="icons/doodle/calendar.svg" alt=""> 우리 둘 공통 설정</div>
+<form class="agenda-card" id="settingsForm" data-sec="common" autocomplete="off">
+<label class="settings-field">
+<span><img class="ico" src="icons/doodle/sparkle.svg" alt=""> 회차</span>
+<div class="round-stepper">
+<button type="button" class="icon-btn" onclick="stepRound(-1)" aria-label="회차 줄이기"><img class="ico" src="icons/doodle/minus.svg" alt=""></button>
+<div class="round-input-wrap">제 <input type="number" id="setRound" min="1" max="999" inputmode="numeric" required> 차</div>
+<button type="button" class="icon-btn" onclick="stepRound(1)" aria-label="회차 늘리기"><img class="ico" src="icons/doodle/plus.svg" alt=""></button>
+</div>
+</label>
+<label class="settings-field">
+<span><img class="ico" src="icons/doodle/calendar.svg" alt=""> 디데이 (다음에 만나는 날짜·시간)</span>
+<input type="datetime-local" id="setDday" class="msg-input" required>
+</label>
+<label class="settings-field">
+<span><img class="ico" src="icons/doodle/pin.svg" alt=""> 장소</span>
+<input type="text" id="setPlace" class="msg-input" maxlength="60" required>
+</label>
+<label class="settings-field">
+<span><img class="ico" src="icons/doodle/hearts.svg" alt=""> 우리가 처음 만난 날 (우리 N일째)</span>
+<input type="date" id="setStart" class="msg-input">
+</label>
+<button type="submit" class="close-btn full" id="settingsSave">설정 저장</button>
+</form>
+<section class="agenda-card" data-sec="push">
+<div class="settings-section-title"><img class="ico" src="icons/doodle/bell.svg" alt=""> 알림 (의결서 · 매일 11:30 편지 · 업데이트)</div>
+<p class="settings-desc" id="pushStatus">확인 중...</p>
+<button type="button" class="close-btn full" id="pushBtn" hidden></button>
+</section>
+<section class="agenda-card" id="installSection" data-sec="install">
+<div class="settings-section-title"><img class="ico" src="icons/doodle/install.svg" alt=""> 앱으로 설치하기</div>
+<p class="settings-desc" id="installGuide"></p>
+<button type="button" class="close-btn full" id="installBtn" hidden>앱 설치하기</button>
+</section>
+<section class="agenda-card" id="versionSection" data-sec="versions">
+<div class="settings-section-title"><img class="ico" src="icons/doodle/diary.svg" alt=""> 업데이트 목록 <span class="ver-now" id="verNow"></span></div>
+<div class="ver-list" id="versionList"><p class="settings-desc">불러오는 중...</p></div>
+</section>
+<button class="back-arrow" type="button" aria-label="돌아가기" onclick="goBack()"><img class="ico" src="icons/doodle/back.svg" alt=""></button>
+</div>
+
+<!-- 레시피 노트: 상세 -->
+<div class="page sub-page" id="pageRecipe">
+<div class="recipe-actions">
+<button type="button" class="icon-btn" aria-label="수정" onclick="editRecipe(currentRecipe && currentRecipe.id)"><img class="ico" src="icons/doodle/pencil.svg" alt=""></button>
+<button type="button" class="icon-btn" aria-label="삭제" onclick="removeRecipe()"><img class="ico" src="icons/doodle/trash.svg" alt=""></button>
+</div>
+<div class="recipe-hero" id="recipeHero"></div>
+<div id="recipeDetail"></div>
+<button class="back-arrow" type="button" aria-label="돌아가기" onclick="goBack()"><img class="ico" src="icons/doodle/back.svg" alt=""></button>
+</div>
+
+<!-- 레시피 노트: 쓰기/수정 -->
+<div class="page sub-page" id="pageRecipeEdit">
+<div class="report-header">
+<div class="badge"><img class="ico" src="icons/doodle/pencil.svg" alt=""> 레시피 쓰기</div>
+<h2 id="recipeEditTitle">새 레시피</h2>
+</div>
+<form class="agenda-card recipe-form" id="recipeForm" autocomplete="off">
+<label class="photo-pick" id="photoPick">
+<input type="file" id="recipePhoto" accept="image/*" hidden>
+<span class="photo-preview" id="photoPreview"><img class="ico" src="icons/doodle/camera.svg" alt=""><small>대표 사진 (갤러리에서 고르기)<br>안 고르면 자동으로 어울리는 사진을 찾아요</small></span>
+</label>
+<button type="button" class="history-link photo-clear" id="photoClear" hidden onclick="clearRecipePhoto()">사진 빼기</button>
+<label class="settings-field"><span>요리 이름</span><input type="text" id="rTitle" class="msg-input" maxlength="60" required></label>
+<div class="form-row">
+<label class="settings-field"><span>분류</span>
+<select id="rCategory" class="msg-input"><option>한식</option><option>양식</option><option>일식</option><option>중식</option><option>디저트</option><option>기타</option></select></label>
+<label class="settings-field"><span>시간(분)</span><input type="number" id="rMinutes" class="msg-input" min="0" max="1440" inputmode="numeric"></label>
+<label class="settings-field"><span>인분</span><input type="number" id="rServings" class="msg-input" min="0" max="50" inputmode="numeric"></label>
+</div>
+<label class="settings-field"><span>재료 (한 줄에 하나씩)</span><textarea id="rIngredients" class="msg-input" rows="5"></textarea></label>
+<label class="settings-field"><span>만드는 법 (한 줄에 한 단계씩)</span><textarea id="rSteps" class="msg-input" rows="7"></textarea></label>
+<label class="settings-field"><span>메모 (내가 바꾼 것, 다음에 할 것)</span><textarea id="rMemo" class="msg-input" rows="3"></textarea></label>
+<button type="submit" class="close-btn full" id="recipeSave">레시피 저장</button>
+</form>
+<button class="back-arrow" type="button" aria-label="돌아가기" onclick="goBack()"><img class="ico" src="icons/doodle/back.svg" alt=""></button>
+</div>
+
+<!-- 레시피 노트: 새 레시피 찾기 (채팅) -->
+<div class="page sub-page" id="pageChat">
+<div class="report-header">
+<div class="badge"><img class="ico" src="icons/doodle/search.svg" alt=""> 새 레시피 찾기</div>
+<h2>뭐 해 먹을까?</h2>
+</div>
+<p class="chat-notice"><img class="ico" src="icons/doodle/magpie.svg" alt=""> 여기서 찾아본 요리는 저녁 5시에 까치가 상대방에게 살짝 귀띔해요</p>
+<div class="chat-log" id="chatLog"></div>
+<form class="chat-input" id="chatForm" autocomplete="off">
+<textarea id="chatText" class="msg-input" rows="1" placeholder="예: 비 오는 날 얼큰한 국물 요리" maxlength="300" enterkeyhint="enter"></textarea>
+<button type="submit" class="icon-btn add" aria-label="보내기"><img class="ico" src="icons/doodle/send.svg" alt=""></button>
+</form>
+<button class="back-arrow" type="button" aria-label="돌아가기" onclick="goBack()"><img class="ico" src="icons/doodle/back.svg" alt=""></button>
+</div>
+
+<!-- 상대랑 대화하기 (Beta) -->
+<div class="page sub-page" id="pageTalk">
+<div class="report-header">
+<div class="badge"><img class="ico" src="icons/doodle/chat.svg" alt=""> 사소한 대화 <small class="beta-tag">BETA</small></div>
+<h2 id="talkTitle">대화하기</h2>
+</div>
+<div class="chat-log" id="talkLog"></div>
+<div class="talk-chips" id="talkChips"></div>
+<form class="chat-input" id="talkForm" autocomplete="off">
+<textarea id="talkText" class="msg-input" rows="1" placeholder="메시지 보내기" maxlength="500" enterkeyhint="enter"></textarea>
+<button type="submit" class="icon-btn add" aria-label="보내기"><img class="ico" src="icons/doodle/send.svg" alt=""></button>
+</form>
+<button class="back-arrow" type="button" aria-label="돌아가기" onclick="goBack()"><img class="ico" src="icons/doodle/back.svg" alt=""></button>
+</div>
+
+<!-- 받은 편지 -->
+<div class="page sub-page" id="pageLetters">
+<div class="report-header">
+<div class="badge"><img class="ico" src="icons/doodle/letter.svg" alt=""> 매일 오전 11:30</div>
+<h2>오늘의 편지</h2>
+</div>
+<div id="letterList"><div class="menu-status">불러오는 중...</div></div>
+<button class="back-arrow" type="button" aria-label="돌아가기" onclick="goBack()"><img class="ico" src="icons/doodle/back.svg" alt=""></button>
+</div>
+
+<!-- 낭만찾기 (월별 낭만 리스트 달력) -->
+<div class="page sub-page" id="pageRomance">
+<div class="badge" id="romTheme"><img class="ico" src="icons/doodle/hearts.svg" alt=""> 네가 있어서 참 좋아</div>
+<div class="romance-head">
+<img class="romance-cat" src="icons/romance/cat.svg" alt="">
+<h2 id="romTitle">11월 낭만찾기</h2>
+<img class="romance-cat flip" src="icons/romance/cat.svg" alt="">
+</div>
+<div class="romance-year">
+<button type="button" class="icon-btn" id="romPrev" aria-label="작년" onclick="moveRomanceYear(-1)"><img class="ico" src="icons/doodle/back.svg" alt=""></button>
+<b id="romYear">2026</b>
+<button type="button" class="icon-btn flip" id="romNext" aria-label="다음 해" onclick="moveRomanceYear(1)"><img class="ico" src="icons/doodle/back.svg" alt=""></button>
+</div>
+<nav class="romance-tabs" id="romTabs" aria-label="월 선택"></nav>
+<div class="agenda-card romance-cal">
+<div class="rom-week"><span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span></div>
+<div class="rom-grid" id="romGrid"></div>
+</div>
+<p class="romance-note" id="romNote"></p>
+<button class="back-arrow" type="button" aria-label="돌아가기" onclick="goBack()"><img class="ico" src="icons/doodle/back.svg" alt=""></button>
+</div>
+
+<!-- 문의하기(상대방) / 문의함(주인) -->
+<div class="page sub-page" id="pageInquiry">
+<div class="report-header">
+<div class="badge"><img class="ico" src="icons/doodle/chat.svg" alt=""> 앱 개선 요청</div>
+<h2 id="inquiryTitle">문의하기</h2>
+</div>
+<div id="inquiryAdd" hidden>
+<button type="button" class="chat-open" id="inquiryOpenBtn" onclick="toggleInquiryForm(true)"><img class="ico" src="icons/doodle/plus.svg" alt=""><span><b>새 문의 남기기</b><small>바라는 점을 하나씩 적어주세요</small></span><em>›</em></button>
+<form class="agenda-card inquiry-form" id="inquiryForm" hidden autocomplete="off">
+<textarea id="inquiryText" class="msg-input" rows="3" maxlength="1000" placeholder="예: 레시피 사진을 여러 장 올리고 싶어요"></textarea>
+<div class="ui-dialog-btns">
+<button type="button" class="close-btn ghost" onclick="toggleInquiryForm(false)">취소</button>
+<button type="submit" class="close-btn" id="inquirySend">보내기</button>
+</div>
+</form>
+</div>
+<div id="inquiryList"><div class="menu-status">불러오는 중...</div></div>
+<button class="back-arrow" type="button" aria-label="돌아가기" onclick="goBack()"><img class="ico" src="icons/doodle/back.svg" alt=""></button>
+</div>
+
+<!-- 우체통 -->
+<div class="page sub-page" id="pageHints">
+<div class="report-header">
+<div class="badge"><img class="ico" src="icons/doodle/magpie.svg" alt=""> 짹짹-!</div>
+<h2>우체통</h2>
+</div>
+<div id="hintList"><div class="menu-status">불러오는 중...</div></div>
+<button class="back-arrow" type="button" aria-label="돌아가기" onclick="goBack()"><img class="ico" src="icons/doodle/back.svg" alt=""></button>
+</div>
+
+<div class="page sub-page" id="pageLetter">
+<article class="letter-paper" id="letterPaper"></article>
+<button class="back-arrow" type="button" aria-label="돌아가기" onclick="goBack()"><img class="ico" src="icons/doodle/back.svg" alt=""></button>
+</div>
+
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+<div class="modal-card">
+<div class="stamp-mark">의결 승인</div>
+<h3 class="modal-title">롱디's 월례 체결 완료!</h3>
+<p class="modal-desc" id="modalDesc">
+제 <span class="round-n">3</span>차 롱디's 월례 회의가 정상적으로 의결되었습니다.<br>곧 만나서 세상에서 가장 행복한 시간을 보내요!
+</p>
+<div class="modal-actions">
+<button class="close-btn" onclick="closeModal()">확인</button>
+<button class="close-btn ghost" onclick="closeModal(); showHistory()"><img class="ico" src="icons/doodle/scroll.svg" alt=""> 등록 내역 보기</button>
+</div>
+</div>
+</div>
+
+<!-- 배포 중 안내 -->
+<!-- 낭만찾기: 날짜 누르면 크게 -->
+<div class="ui-dialog" id="romModal" hidden role="dialog" aria-modal="true" aria-labelledby="romModalTitle" onclick="if (event.target === this) closeRomance()">
+<div class="modal-card rom-card">
+<div class="rom-art-wrap">
+<img class="rom-art" id="romModalArt" src="" alt="">
+<img class="rom-peek" src="icons/romance/cat.svg" alt="">
+</div>
+<div class="rom-date" id="romModalDate"></div>
+<h3 class="modal-title" id="romModalTitle"></h3>
+<div class="rom-tip rom-board" id="romBoard"></div>
+<div class="ui-dialog-btns">
+<button type="button" class="close-btn ghost" id="romModalPrev" onclick="stepRomance(-1)">‹ 어제</button>
+<button type="button" class="close-btn" onclick="closeRomance()">닫기</button>
+<button type="button" class="close-btn ghost" id="romModalNext" onclick="stepRomance(1)">내일 ›</button>
+</div>
+</div>
+</div>
+
+<!-- 앱 디자인 확인/안내 창 (기본 confirm·alert 대신) -->
+<div class="ui-dialog" id="uiDialog" hidden role="dialog" aria-modal="true" aria-labelledby="uiDialogTitle">
+<div class="modal-card ui-dialog-card">
+<img class="ui-dialog-ico" id="uiDialogIco" src="icons/doodle/bell.svg" alt="">
+<h3 class="modal-title" id="uiDialogTitle"></h3>
+<p class="modal-desc" id="uiDialogMsg"></p>
+<div class="ui-dialog-btns">
+<button type="button" class="close-btn ghost" id="uiDialogCancel">취소</button>
+<button type="button" class="close-btn" id="uiDialogOk">확인</button>
+</div>
+</div>
+</div>
+<div class="maintenance" id="updatedPopup" hidden onclick="this.hidden = true">
+<div class="modal-card">
+<img class="maint-ico done" src="icons/doodle/blossom.svg" alt="">
+<h3 class="modal-title">꽃단장 완료!</h3>
+<p class="modal-desc">업데이트 완료되었습니다.</p>
+<button type="button" class="close-btn full">확인</button>
+</div>
+</div>
+<div class="maintenance" id="maintenance" hidden>
+<div class="modal-card">
+<img class="maint-ico" src="icons/doodle/blossom.svg" alt="">
+<h3 class="modal-title">잠시 꽃단장 중입니다</h3>
+<p class="modal-desc">새 버전으로 단장하고 있어요.<br>1~2분 뒤에 저절로 열려요!</p>
+</div>
+</div>
+
+<!-- 사이드 메뉴: 목록 -->
+<div class="drawer-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
+<aside class="drawer" id="sideMenu" aria-hidden="true" aria-label="메뉴">
+<div class="drawer-scroll">
+<div class="drawer-me" id="drawerMe"></div>
+<nav class="drawer-nav">
+<button type="button" onclick="navTo('page3')"><img class="ico" src="icons/doodle/scroll.svg" alt=""><span>등록된 의결서</span><em>›</em></button>
+<button type="button" onclick="navTo('pageTalk')"><img class="ico" src="icons/doodle/chat.svg" alt=""><span><span id="navTalkLabel">대화하기</span> <small class="beta-tag">BETA</small></span><em>›</em></button>
+<button type="button" onclick="navTo('pageRomance')"><img class="ico" src="icons/romance/cat.svg" alt=""><span id="navRomanceLabel">이달의 낭만 리스트</span><em>›</em></button>
+<button type="button" onclick="navTo('pageLetters')"><img class="ico" src="icons/doodle/letter.svg" alt=""><span>오늘의 편지</span><em>›</em></button>
+<button type="button" onclick="navTo('pageHints')"><img class="ico" src="icons/doodle/mailbox.svg" alt=""><span>우체통</span><b class="count-badge inline" id="hintBadgeNav" hidden></b><em>›</em></button>
+<button type="button" onclick="location.href='town.html'"><img class="ico" src="icons/doodle/home.svg" alt=""><span>우리 동네 <small class="beta-tag">BETA</small></span><em>›</em></button>
+<button type="button" onclick="navTo('page4')"><img class="ico" src="icons/doodle/diary.svg" alt=""><span>우리들의 히스토리</span><em>›</em></button>
+<button type="button" onclick="navTo('pageSettings')"><img class="ico" src="icons/doodle/gear.svg" alt=""><span>설정</span><em>›</em></button>
+<button type="button" id="navInquiry" onclick="navTo('pageInquiry')"><img class="ico" src="icons/doodle/chat.svg" alt=""><span id="navInquiryLabel">문의하기</span><b class="count-badge inline" id="inquiryBadgeNav" hidden></b><em>›</em></button>
+</nav>
+</div>
+<div class="drawer-footer">
+<button type="button" class="back-arrow" aria-label="닫기" onclick="closeMenu()"><img class="ico" src="icons/doodle/back.svg" alt=""></button>
+<span class="drawer-version" id="drawerVersion"></span>
+<button type="button" class="back-arrow drawer-home" aria-label="처음 화면으로" onclick="navTo('page1')"><img class="ico" src="icons/doodle/home.svg" alt=""></button>
+</div>
+</aside>
+
+<script src="js/main.js"></script>
+</body>
+</html>

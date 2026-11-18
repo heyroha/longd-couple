@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>월례 응답함</title>
+<link href="https://fonts.googleapis.com/css2?family=Poor+Story&display=swap" rel="stylesheet">
+<style>
+:root { --primary: #ff6b81; --text: #332228; --sub: #7a5c65; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Poor Story', cursive;
+  background: linear-gradient(135deg, #fff5f6 0%, #ffe0e9 50%, #fbe4e8 100%);
+  min-height: 100vh;
+  color: var(--text);
+  padding: 32px 16px;
+}
+.wrap { max-width: 520px; margin: 0 auto; }
+h1 { font-family: 'Poor Story', cursive; font-size: 1.6rem; margin-bottom: 4px; }
+.meta { color: var(--sub); font-size: 0.85rem; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+.refresh { border: none; background: var(--primary); color: #fff; padding: 6px 14px; border-radius: 50px; font-weight: 700; cursor: pointer; }
+.card {
+  background: rgba(255,255,255,0.9);
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 15px rgba(255,107,129,0.12);
+}
+.time { font-size: 0.8rem; color: var(--sub); margin-bottom: 8px; }
+.food { font-weight: 700; font-size: 1.05rem; margin-bottom: 6px; }
+.msg { background: #fdf8f9; border: 1px solid #f3e5e8; border-radius: 12px; padding: 10px 12px; margin-top: 6px; line-height: 1.5; word-break: break-all; }
+.tag { display: inline-block; margin-top: 8px; font-size: 0.78rem; color: var(--primary); background: rgba(255,107,129,0.1); padding: 3px 10px; border-radius: 50px; }
+.empty, .error { text-align: center; color: var(--sub); padding: 40px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📋 롱디's 월례 응답함</h1>
+  <div class="meta"><span id="count">불러오는 중...</span><button class="refresh" id="refresh">새로고침</button></div>
+  <div id="list"></div>
+</div>
+<script>
+const listEl = document.getElementById('list');
+const countEl = document.getElementById('count');
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+async function load() {
+  try {
+    const res = await fetch('/api/responses', { cache: 'no-store' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '불러오기 실패');
+    const items = data.responses;
+    countEl.textContent = `총 ${items.length}건의 의결서`;
+    if (!items.length) { listEl.innerHTML = '<div class="empty">아직 도착한 의결서가 없어요 💌</div>'; return; }
+    listEl.innerHTML = items.map(r => `
+      <div class="card">
+        <div class="time">${esc(r.profile_name || r.device || '')} · ${esc(new Date(r.created_at).toLocaleString('ko-KR'))}</div>
+        <div class="food">🍽️ ${esc(r.food)}</div>
+        ${r.message ? `<div class="msg">💬 ${esc(r.message)} ${esc(r.sticker)}</div>` : `<div class="msg">${esc(r.sticker)} (메시지 없음)</div>`}
+        ${r.no_attempts ? `<span class="tag">불참 버튼 ${r.no_attempts}번 시도함 😜</span>` : `<span class="tag">망설임 없이 참석 💕</span>`}
+      </div>`).join('');
+  } catch (e) {
+    countEl.textContent = '';
+    listEl.innerHTML = `<div class="error">${esc(e.message)}</div>`;
+  }
+}
+
+document.getElementById('refresh').addEventListener('click', load);
+load();
+</script>
+</body>
+</html>

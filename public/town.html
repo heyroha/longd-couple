@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>우리 동네 · 롱디's 월례</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poor+Story&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2d2a32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="롱디's 월례">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.39.3/dist/galmuri.css">
+<link rel="stylesheet" href="css/town.css">
+</head>
+<body>
+<header class="town-bar">
+<button type="button" id="backBtn" aria-label="앱으로 돌아가기"><img src="icons/doodle/back.svg" alt=""></button>
+<div class="town-title"><b>우리 동네</b><span id="sceneTitle"></span></div>
+<span class="status" id="status"></span>
+</header>
+<canvas id="town"></canvas>
+<div class="say" id="say" hidden></div>
+<button type="button" class="inv-btn" id="invBtn" aria-label="인벤토리" hidden><img src="icons/town/bag.svg" alt=""><b id="invCount" hidden></b></button>
+<div class="inv-panel" id="invPanel" hidden>
+<div class="inv-head"><b>인벤토리</b><button type="button" id="invClose" aria-label="닫기">✕</button></div>
+<div class="inv-list" id="invList"></div>
+</div>
+<div class="cam-ctl" id="camCtl">
+<button type="button" id="zoomIn" aria-label="확대"><img src="icons/doodle/plus.svg" alt=""></button>
+<button type="button" id="zoomOut" aria-label="축소"><img src="icons/doodle/minus.svg" alt=""></button>
+<button type="button" id="viewBtn" aria-label="정면에서 보기"><img src="icons/town/city.svg" alt=""></button>
+<button type="button" id="turnBtn" aria-label="길 건너편 보기" hidden><img src="icons/town/turn.svg" alt=""></button>
+<button type="button" id="emoteBtn" aria-label="감정 표현 · 인벤토리"><img src="icons/town/smile.svg" alt=""></button>
+<button type="button" id="camReset" aria-label="내 캐릭터로 시야 되돌리기" hidden><img src="icons/town/target.svg" alt=""></button>
+</div>
+<button type="button" class="ride-btn" id="rideBtn" hidden>내리기</button>
+<button type="button" class="talk-btn" id="talkBtn" aria-label="꾹 누르고 말하기 (무전기)"><img src="icons/town/walkie.svg" alt=""><small>꾹 무전</small></button>
+<div class="talk-pill" id="talkPill" hidden>말하는 중</div>
+<button type="button" class="chat-btn" id="chatBtn" aria-label="채팅"><img src="icons/doodle/chat.svg" alt=""><b id="chatBadge" hidden></b></button>
+<div class="chat-panel" id="chatPanel" hidden>
+<div class="chat-list" id="chatList"></div>
+<form class="chat-form" id="chatForm" autocomplete="off">
+<input id="chatInput" maxlength="200" placeholder="한마디 보내기" enterkeyhint="send">
+<button type="submit">보내기</button>
+</form>
+</div>
+<div class="edit-bar" id="editBar" hidden>
+<b id="editName">가구 옮기기</b>
+<div class="edit-pad">
+<button type="button" data-d="-1,0" aria-label="왼쪽 위">↖</button>
+<button type="button" data-d="0,-1" aria-label="오른쪽 위">↗</button>
+<button type="button" data-d="0,1" aria-label="왼쪽 아래">↙</button>
+<button type="button" data-d="1,0" aria-label="오른쪽 아래">↘</button>
+</div>
+<button type="button" class="edit-tool" id="editRot" aria-label="회전">🔄</button>
+<button type="button" class="edit-tool" id="editStore" aria-label="인벤토리에 넣기">📦</button>
+<button type="button" class="edit-done" id="editDone">완료</button>
+</div>
+<div class="toast" id="toast"></div>
+<div class="fade" id="fade"></div>
+<div class="modal" id="modal" hidden></div>
+<script src="js/town-ing.js"></script>
+<script src="js/town-icons.js"></script>
+<script src="js/town-music.js"></script>
+<script src="js/town-cook.js"></script>
+<script src="js/town-sprites.js"></script>
+<script src="js/town-front.js"></script>
+<script src="js/town.js"></script>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }</script>
+<script>if (!/[?&]2d\b/.test(location.search)) { const s = document.createElement('script'); s.type = 'module'; s.src = 'js/town3d-view.js'; document.body.appendChild(s); }</script>
+</body>
+</html>

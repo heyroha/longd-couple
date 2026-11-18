@@ -1,0 +1,47 @@
+# 배포 안내: push 하면 앱에 "잠시 꽃단장 중입니다" → Vercel 새 버전이 뜨면 해제 + "새 버전" 알림
+name: 배포 안내 (꽃단장 → 업데이트 알림)
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['README.md', 'docs/**', 'tools/**', '.github/**']
+
+concurrency:
+  group: deploy-notify
+  cancel-in-progress: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      APP: ${{ secrets.APP_URL }}
+      TOKEN: ${{ secrets.ADMIN_TOKEN }}
+      MESSAGE: ${{ github.event.head_commit.message }}
+    steps:
+      - name: 꽃단장 시작 (앱에 안내 팝업)
+        run: |
+          if [ -z "$APP" ]; then echo "APP_URL Secret 이 없어서 건너뜀"; exit 0; fi
+          curl -sS -X POST "$APP/api/admin/deploy" -H "x-admin-token: $TOKEN" \
+            -H 'Content-Type: application/json' -d '{"phase":"start"}' || true
+
+      - name: 새 버전이 뜰 때까지 기다리기 (최대 10분)
+        id: wait
+        if: env.APP != ''
+        run: |
+          for i in $(seq 1 60); do
+            v=$(curl -fsS "$APP/api/status" | jq -r .version 2>/dev/null || true)
+            if [ "$v" = "$GITHUB_SHA" ]; then echo "ok=1" >> "$GITHUB_OUTPUT"; exit 0; fi
+            sleep 10
+          done
+          echo "ok=0" >> "$GITHUB_OUTPUT"
+
+      - name: 꽃단장 끝 + 업데이트 알림
+        if: always() && env.APP != ''
+        run: |
+          phase=failed
+          [ "${{ steps.wait.outputs.ok }}" = "1" ] && phase=done
+          first_line=$(printf '%s' "$MESSAGE" | head -n1 | cut -c1-100)
+          body=$(jq -n --arg p "$phase" --arg t "💌 롱디's 월례 앱 배포 완료!" --arg m "새로운 버전으로 업데이트됐어요 · $first_line" '{phase:$p, title:$t, message:$m, to:"girl"}')  # 배포 완료 알림은 지민(女) 폰에만
+          curl -sS -X POST "$APP/api/admin/deploy" -H "x-admin-token: $TOKEN" \
+            -H 'Content-Type: application/json' -d "$body"
